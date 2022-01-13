@@ -1,0 +1,78 @@
+/*
+ * Lab5.c
+ *
+ * Created: 10/1/2021 2:33:40 PM
+ * Author : luka0
+ */ 
+
+#define F_CPU 16000000
+#define BAUD 9600
+#define BAUDRATE (((F_CPU) / (16UL * BAUD)) - 1)
+
+#include <avr/io.h>
+#include <util/delay.h>
+
+#define ROWS 4
+#define COLS 4
+#define DELAY 250
+
+const char tone[ROWS][COLS] = {
+	{141, 133, 126, 119},
+	{112, 105, 99, 94},
+	{89, 63, 79, 74},
+	{70, 66, 62, 59}};
+
+
+// function to initialize UART
+void init(void) {
+	DDRD |= (1 << DDD4) | (1 << DDD5) | (1 << DDD6) | (1 << DDD7);				// set rows as output
+	DDRB &= ~(1 << DDB0) & ~(1 << DDB1) & ~(1 << DDB2) & ~(1 << DDB3);			// set columns as input
+	PORTB |= (1 << PORTB0) | (1 << PORTB1) | (1 << PORTB2) | (1 << PORTB3);		// enable internal pull up resistors for columns
+	PORTD |= (1 << PORTD4) | (1 << PORTD5) | (1 << PORTD6) | (1 << PORTD7);								// set all rows output as high
+	TCCR2A |= (1 << WGM20) | (1 << WGM21) | (1 << COM2B1);						// enable timer 2 PWM output mode
+	TCCR2B |= (1 << WGM22) | (1 << CS22) | (1 << CS21);							// enable timer 2 waveform generation with pre-scaler = 256
+}
+
+
+void playTone(uint8_t j) {
+	while(!(PINB & (1 << j))) {
+		while((TIFR0 & (1 << OCF0B)) == 0) {
+			PORTD |= (1 << 1);
+		}
+		TIFR0 |= (1 < OCF0B);
+		while((TIFR0 & (1 << OCF0A)) == 0) {
+			PORTD &= ~(1 << 1);
+		}
+		TIFR0 |= (1 < OCF0A);
+	}
+}
+
+
+void scan_keypad() {
+	for(uint8_t i = 0; i < ROWS; i++) {
+		PORTD &= ~(1 << (i + ROWS));											// set i:th row to low (offset by 4 since we start at pin 4)
+		for(uint8_t j = 0; j < COLS; j++) {
+			if(!(PINB & (1 << j))) {											// check which columns is pulled low
+				while(!(PINB & (1 << j))) {
+					OCR2A = tone[i][j];											// set frequency
+					OCR2B = OCR2A * 0.5;										// 50% duty cycle
+				}
+				OCR2A = 0;														// reset period
+				OCR2B = 0;														// reset duty cycle
+			}
+		}
+		PORTD |= (1 << (i + ROWS));												// set the i:th row back to high (offset by 4 since we start at pin 4)
+	}
+}
+
+
+int main(void)
+{
+	init();
+		
+	while (1)
+	{
+		scan_keypad();
+	}
+}
+

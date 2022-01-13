@@ -1,0 +1,28 @@
+1. An interrupt is a hardware or software generated signal when immediate attention is needed by the processor.
+
+The interrupt service routine is a software interrupt handler that is invoked by a hardware device. A request is sent to the CPU which will activate the process. When its complete, the process is resumed from where it was interrupted.
+
+2. Interrupt vector & interrupt handler or internal and external interrupts
+
+3. 
+a)Pin change interrupt 1 is enabled and causes an interrupt
+
+b) PCICR is the Pin Change Interrupt Control Register &
+   PCMSK0 is Pin CHange Mask Register
+
+
+c) It determines if the pin change interrupt is enabled for the corresponding I/O pin
+
+4.
+PCMSK0 |= (1 << 7);
+
+5. sei() enables interrupts and cli() disables interrupts
+
+6. 
+ISR(TIMERn_COMPA_vect) {
+	LEDON;
+}
+
+ISR(TIMERn_COMPB_vect) {
+	LEDOFF;
+}
